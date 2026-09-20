@@ -73,10 +73,16 @@ repeat until the user explicitly approves (e.g. "ok", "passt", "go"). Do not
 treat silence, a question, or a partial answer as approval. Do not write files,
 branches or commits before that approval.
 
+That approval is the user's request to publish — file, commit **and pull
+request**. Do not ask again whether to open the PR; the user has been asked to
+authorise exactly that, once, here.
+
 ### Phase 3 — Publish
 
 Enter this phase only when both hold: the user has approved the transcription
-(phase 2) **and** validation passes (step 3 below). No pull request before that.
+(phase 2) **and** validation passes (step 3 below). No pull request before
+that — and no extra confirmation after it: once validation passes, open the
+pull request straight away.
 
 1. Create the file: `pnpm new-lesson --title "<title>" --language <tag>`
    (or `node scripts/new-lesson.ts …` if pnpm is unavailable). It prints the

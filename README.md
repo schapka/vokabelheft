@@ -48,7 +48,8 @@ live in `AGENTS.md`, which Claude Code reads automatically (as do most other cod
    branch, attach the photo(s) and send:
 
    > New lesson from the attached photo. Follow the "Adding a lesson from a
-   > photo" procedure in AGENTS.md.
+   > photo" procedure in AGENTS.md: show me the transcription for review, and
+   > after my ok validate it and open the pull request.
 
    That's all — title, language, school year, file name and id are derived by
    Claude and the `new-lesson` script. Add a hint only if you want something
