@@ -16,6 +16,7 @@ const lesson: Lesson = buildLesson({
   title: 'T',
   language: 'en-GB',
   schoolYear: 2026,
+  grade: 6,
   groups: [2],
   words: [['haben', 'to have, had'], ['tausend', 'thousand']],
 })
@@ -25,7 +26,7 @@ const tausend = lesson.words[1]!
 describe('keys and dates', () => {
   it('keys progress by lesson id and normalised German side', () => {
     expect(haben.key).toBe('ab12cd34|haben')
-    expect(buildLesson({ id: '3f9a1c2e', title: 'T', language: 'en-GB', schoolYear: 2026, groups: [1], words: [['(die) Meinung, (die) Ansicht', 'opinion']] }).words[0]!.key)
+    expect(buildLesson({ id: '3f9a1c2e', title: 'T', language: 'en-GB', schoolYear: 2026, grade: 6, groups: [1], words: [['(die) Meinung, (die) Ansicht', 'opinion']] }).words[0]!.key)
       .toBe('3f9a1c2e|diemeinungdieansicht')
   })
 

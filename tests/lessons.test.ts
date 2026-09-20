@@ -26,7 +26,7 @@ describe('data/lessons', () => {
 })
 
 describe('lessonFileSchema', () => {
-  const valid = { id: '3f9a1c2e', title: 'T', language: 'en-GB', schoolYear: 2026, groups: [1, 1], words: [['eins', 'one'], ['zwei', 'two']] }
+  const valid = { id: '3f9a1c2e', title: 'T', language: 'en-GB', schoolYear: 2026, grade: 6, groups: [1, 1], words: [['eins', 'one'], ['zwei', 'two']] }
 
   function issuesOf(input: unknown): string[] {
     const result = lessonFileSchema.safeParse(input)
@@ -66,6 +66,12 @@ describe('lessonFileSchema', () => {
     expect(issuesOf({ ...valid, subject: 'Englisch' })[0]).toMatch(/subject/)
   })
 
+  it('requires a grade from 1 to 13', () => {
+    expect(issuesOf({ ...valid, grade: undefined })[0]).toMatch(/^grade:/)
+    expect(issuesOf({ ...valid, grade: 0 })[0]).toMatch(/^grade:/)
+    expect(issuesOf({ ...valid, grade: '6' })[0]).toMatch(/^grade:/)
+  })
+
   it('requires title, language and schoolYear', () => {
     expect(issuesOf({ ...valid, title: '' })[0]).toMatch(/^title:/)
     expect(issuesOf({ ...valid, language: 'english' })).toEqual(['language: language must be a BCP-47 tag like en-GB'])
@@ -74,10 +80,10 @@ describe('lessonFileSchema', () => {
 })
 
 describe('validateLessonSet', () => {
-  const lessonNamed = (id: string, schoolYear = 2026, language = 'en-GB') => ({ id, title: 'T', language, schoolYear, groups: [1], words: [['eins', 'one']] })
+  const lessonNamed = (id: string, schoolYear = 2026, language = 'en-GB') => ({ id, title: 'T', language, schoolYear, grade: 6, groups: [1], words: [['eins', 'one']] })
 
   it('keeps the id independent of the file name', () => {
-    const result = validateLessonSet({ '2026-01-en-1-2.json': lessonNamed('3f9a1c2e') })
+    const result = validateLessonSet({ '2026-g06-01-en-1-2.json': lessonNamed('3f9a1c2e') })
     expect(result.issues).toEqual([])
     expect(result.lessons.map(lesson => lesson.id)).toEqual(['3f9a1c2e'])
   })
@@ -85,50 +91,53 @@ describe('validateLessonSet', () => {
   it('rejects file names outside the convention', () => {
     const result = validateLessonSet({ 'en-1-2.json': lessonNamed('3f9a1c2e') })
     expect(result.issues.map(formatIssue)).toEqual([
-      'en-1-2.json: file name must be <school-year>-<nn>-<language>-<reference>.json, e.g. 2026-01-en-1-2.json (pnpm new-lesson creates it)',
+      'en-1-2.json: file name must be <school-year>-g<grade>-<nn>-<language>-<reference>.json, e.g. 2026-g06-01-en-1-2.json (pnpm new-lesson creates it)',
     ])
   })
 
   it('rejects the same id in two files', () => {
-    const result = validateLessonSet({ '2026-01-en-a.json': lessonNamed('3f9a1c2e'), '2026-02-en-b.json': lessonNamed('3f9a1c2e') })
-    expect(result.issues.map(formatIssue)).toEqual(['2026-02-en-b.json → id: id "3f9a1c2e" is already used by 2026-01-en-a.json'])
+    const result = validateLessonSet({ '2026-g06-01-en-a.json': lessonNamed('3f9a1c2e'), '2026-g06-02-en-b.json': lessonNamed('3f9a1c2e') })
+    expect(result.issues.map(formatIssue)).toEqual(['2026-g06-02-en-b.json → id: id "3f9a1c2e" is already used by 2026-g06-01-en-a.json'])
     expect(result.lessons).toEqual([])
   })
 
   it('collects issues from every file', () => {
-    const result = validateLessonSet({ '2026-01-en-a.json': { ...lessonNamed('3f9a1c2e'), groups: [2] }, '2026-02-en-b.json': { id: 'B' } })
-    expect(result.issues.map(issue => issue.file)).toEqual(['2026-01-en-a.json', ...Array.from({ length: 6 }).fill('2026-02-en-b.json')])
+    const result = validateLessonSet({ '2026-g06-01-en-a.json': { ...lessonNamed('3f9a1c2e'), groups: [2] }, '2026-g06-02-en-b.json': { id: 'B' } })
+    expect(result.issues.map(issue => issue.file)).toEqual(['2026-g06-01-en-a.json', ...Array.from({ length: 7 }).fill('2026-g06-02-en-b.json')])
     expect(result.lessons).toEqual([])
   })
 
   it('keeps file name and fields in sync', () => {
-    expect(validateLessonSet({ '2025-01-en-a.json': lessonNamed('3f9a1c2e', 2026) }).issues.map(formatIssue))
-      .toEqual(['2025-01-en-a.json → schoolYear: schoolYear 2026 does not match the file name (2025)'])
-    expect(validateLessonSet({ '2026-01-fr-a.json': lessonNamed('3f9a1c2e', 2026, 'en-GB') }).issues.map(formatIssue))
-      .toEqual(['2026-01-fr-a.json → language: language "en-GB" does not match the file name ("fr")'])
+    expect(validateLessonSet({ '2026-g02-01-en-a.json': lessonNamed('3f9a1c2e') }).issues.map(formatIssue))
+      .toEqual(['2026-g02-01-en-a.json → grade: grade 6 does not match the file name (g02)'])
+    expect(validateLessonSet({ '2025-g06-01-en-a.json': lessonNamed('3f9a1c2e', 2026) }).issues.map(formatIssue))
+      .toEqual(['2025-g06-01-en-a.json → schoolYear: schoolYear 2026 does not match the file name (2025)'])
+    expect(validateLessonSet({ '2026-g06-01-fr-a.json': lessonNamed('3f9a1c2e', 2026, 'en-GB') }).issues.map(formatIssue))
+      .toEqual(['2026-g06-01-fr-a.json → language: language "en-GB" does not match the file name ("fr")'])
   })
 
   it('orders lessons by school year and number, not by id', () => {
     const result = validateLessonSet({
-      '2027-01-en-3-1.json': lessonNamed('00000003', 2027),
-      '2026-10-en-2-4.json': lessonNamed('00000002'),
-      '2026-02-en-1-3.json': lessonNamed('00000001'),
+      '2027-g07-01-en-3-1.json': { ...lessonNamed('00000003', 2027), grade: 7 },
+      '2026-g06-10-en-2-4.json': lessonNamed('00000002'),
+      '2026-g06-02-en-1-3.json': lessonNamed('00000001'),
     })
     expect(result.issues).toEqual([])
     expect(result.lessons.map(lesson => lesson.id)).toEqual(['00000001', '00000002', '00000003'])
   })
 
   it('compareFileNames sorts 2 before 10', () => {
-    expect(['2026-10-en-a.json', '2026-2-en-a.json', '2026-01-en-a.json'].sort(compareFileNames)).toEqual(['2026-01-en-a.json', '2026-2-en-a.json', '2026-10-en-a.json'])
+    expect(['2026-g06-10-en-a.json', '2026-g06-2-en-a.json', '2026-g06-01-en-a.json'].sort(compareFileNames)).toEqual(['2026-g06-01-en-a.json', '2026-g06-2-en-a.json', '2026-g06-10-en-a.json'])
   })
 })
 
 describe('buildLesson', () => {
   it('splits words into the configured groups', () => {
-    const lesson = buildLesson({ id: '3f9a1c2e', title: 'T', language: 'fr-FR', schoolYear: 2027, groups: [2, 1], words: [['a', '1'], ['b', '2'], ['c', '3']] })
+    const lesson = buildLesson({ id: '3f9a1c2e', title: 'T', language: 'fr-FR', schoolYear: 2027, grade: 7, groups: [2, 1], words: [['a', '1'], ['b', '2'], ['c', '3']] })
     expect(lesson.groups.map(group => group.map(word => word.german))).toEqual([['a', 'b'], ['c']])
     expect(lesson.words[0]).toEqual({ index: 0, german: 'a', foreign: '1', language: 'fr-FR', key: '3f9a1c2e|a' })
     expect(lesson.schoolYear).toBe(2027)
+    expect(lesson.grade).toBe(7)
   })
 })
 
@@ -141,9 +150,12 @@ describe('lesson.schema.json', () => {
 
 describe('lesson file names', () => {
   it('round-trip through parse and format', () => {
-    const parts = parseLessonFileName('2026-03-en-unit-1-list-3.json')
-    expect(parts).toEqual({ schoolYear: 2026, number: 3, language: 'en', reference: 'unit-1-list-3' })
-    expect(formatLessonFileName(parts!)).toBe('2026-03-en-unit-1-list-3.json')
+    const parts = parseLessonFileName('2026-g06-03-en-unit-1-list-3.json')
+    expect(parts).toEqual({ schoolYear: 2026, grade: 6, number: 3, language: 'en', reference: 'unit-1-list-3' })
+    expect(formatLessonFileName(parts!)).toBe('2026-g06-03-en-unit-1-list-3.json')
+    expect(formatLessonFileName({ schoolYear: 2027, grade: 2, number: 1, language: 'de', reference: 'x' })).toBe('2027-g02-01-de-x.json')
+    expect(parseLessonFileName('2026-g6-03-en-1-2.json')).toBeNull()
+    expect(parseLessonFileName('2026-03-en-1-2.json')).toBeNull()
     expect(parseLessonFileName('en-1-2.json')).toBeNull()
   })
 

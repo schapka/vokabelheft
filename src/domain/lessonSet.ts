@@ -68,7 +68,7 @@ export function validateLessonSet(filesRaw: Record<string, unknown>): LessonSetR
   for (const [file, raw] of Object.entries(filesRaw)) {
     const nameParts = parseLessonFileName(file)
     if (!nameParts) {
-      issues.push({ file, path: '', message: 'file name must be <school-year>-<nn>-<language>-<reference>.json, e.g. 2026-01-en-1-2.json (pnpm new-lesson creates it)' })
+      issues.push({ file, path: '', message: 'file name must be <school-year>-g<grade>-<nn>-<language>-<reference>.json, e.g. 2026-g06-01-en-1-2.json (pnpm new-lesson creates it)' })
       continue
     }
     const result = lessonFileSchema.safeParse(raw)
@@ -77,9 +77,13 @@ export function validateLessonSet(filesRaw: Record<string, unknown>): LessonSetR
       continue
     }
     const lesson = result.data
-    // the file name repeats two fields for humans; they must not drift apart
+    // the file name repeats three fields for humans; they must not drift apart
     if (nameParts.schoolYear !== lesson.schoolYear) {
       issues.push({ file, path: 'schoolYear', message: `schoolYear ${lesson.schoolYear} does not match the file name (${nameParts.schoolYear})` })
+      continue
+    }
+    if (nameParts.grade !== lesson.grade) {
+      issues.push({ file, path: 'grade', message: `grade ${lesson.grade} does not match the file name (g${String(nameParts.grade).padStart(2, '0')})` })
       continue
     }
     if (nameParts.language !== primaryLanguage(lesson.language)) {

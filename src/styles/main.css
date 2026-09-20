@@ -19,6 +19,11 @@
   --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
 }
 
+@layer components {
+  /* sticks below the notch / status bar of the installed app */
+  .sticky-top { position: sticky; top: env(safe-area-inset-top, 0px); }
+}
+
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;

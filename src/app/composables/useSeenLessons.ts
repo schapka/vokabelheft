@@ -24,5 +24,5 @@ export function useSeenLessons(lessons: Lesson[]) {
       seen.value = [...seen.value, id]
   }
 
-  return { isNew, markSeen }
+  return { isNew, markSeen, seen }
 }

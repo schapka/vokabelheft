@@ -3,6 +3,7 @@ import type { Lesson } from '@/domain/lesson.ts'
 import { computed } from 'vue'
 import { useProgress } from '@/app/composables/useProgress.ts'
 import { languageName } from '@/domain/lesson.ts'
+import { formatSchoolYear } from '@/domain/schoolYear.ts'
 import ProgressBar from './ProgressBar.vue'
 
 const props = defineProps<{
@@ -36,6 +37,9 @@ const steps = computed(() => {
       </span>
       <span class="shrink-0 text-sm text-foreground-muted">{{ languageName(lesson.language) }}</span>
     </div>
+    <p class="mt-1 text-sm text-foreground-muted">
+      Klasse {{ lesson.grade }}, {{ formatSchoolYear(lesson.schoolYear) }}
+    </p>
     <p class="mt-1 text-sm text-foreground-muted">
       {{ sitting }} von {{ total }} {{ sitting === 1 ? 'sitzt' : 'sitzen' }}
     </p>

@@ -1,22 +1,25 @@
 /**
- * File-name convention of a lesson: <school-year>-<nn>-<language>-<reference>.json
+ * File-name convention of a lesson: <school-year>-g<grade>-<nn>-<language>-<reference>.json
  *
- *   2026-01-en-1-2.json    school year 2026/27, 1st lesson of that year, English, "1-2" as reference
+ *   2026-g06-01-en-1-2.json    school year 2026/27, grade 6, 1st lesson of that year and grade,
+ *                              English, "1-2" as reference
  *
  * The name is for humans and for ordering (numerically aware, so 2026-02 comes
- * before 2026-10). Renaming a file changes nothing but its position. The
- * school year and language are repeated inside the file; the validator keeps
- * both in sync.
+ * before 2026-10). Renaming a file changes nothing but its position. School
+ * year, grade and language are repeated inside the file; the validator keeps
+ * them in sync.
  *
  * Dependency-free on purpose: scripts/new-lesson.ts runs without `pnpm install`.
  */
 
-export const LESSON_FILE_PATTERN = /^(\d{4})-(\d{2})-([a-z]{2})-([a-z0-9-]+)\.json$/
+export const LESSON_FILE_PATTERN = /^(\d{4})-g(\d{2})-(\d{2})-([a-z]{2})-([a-z0-9-]+)\.json$/
 
 export interface LessonFileName {
   /** calendar year the school year starts in */
   schoolYear: number
-  /** running number within the school year, starting at 1 */
+  /** school grade (Klasse) */
+  grade: number
+  /** running number within school year and grade, starting at 1 */
   number: number
   /** primary language subtag, e.g. "en" */
   language: string
@@ -28,11 +31,11 @@ export function parseLessonFileName(name: string): LessonFileName | null {
   const match = LESSON_FILE_PATTERN.exec(name)
   if (!match)
     return null
-  return { schoolYear: Number(match[1]), number: Number(match[2]), language: match[3]!, reference: match[4]! }
+  return { schoolYear: Number(match[1]), grade: Number(match[2]), number: Number(match[3]), language: match[4]!, reference: match[5]! }
 }
 
 export function formatLessonFileName(parts: LessonFileName): string {
-  return `${parts.schoolYear}-${String(parts.number).padStart(2, '0')}-${parts.language}-${parts.reference}.json`
+  return `${parts.schoolYear}-g${String(parts.grade).padStart(2, '0')}-${String(parts.number).padStart(2, '0')}-${parts.language}-${parts.reference}.json`
 }
 
 const fileOrder = new Intl.Collator('en', { numeric: true })

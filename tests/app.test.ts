@@ -39,12 +39,14 @@ describe('app', () => {
     expect(wrapper.text()).toContain('Vokabeln üben')
     expect(wrapper.text()).toContain('Vokabelliste 1.2')
     expect(wrapper.text()).toContain('0 von 43 sitzen')
+    expect(wrapper.text()).toContain('Klasse 6, 2026/27')
     expect(wrapper.text()).not.toContain('Wackelkandidaten')
   })
 
   it('opens a lesson via its hash URL and reads through the first portion', async () => {
     const { wrapper } = await mountApp('#/l/f1e88eb8')
     expect(wrapper.text()).toContain('Vokabelliste 1.2')
+    expect(wrapper.text()).toContain('Englisch, Klasse 6, 2026/27, 43 Wörter')
     expect(wrapper.text()).toContain('Wort 1 von 15')
     expect(wrapper.text()).toContain('tausend')
 
@@ -65,7 +67,7 @@ describe('app', () => {
 
     // the prompt is the German side; look up the expected English answer
     const german = wrapper.find('[data-testid="prompt"]').text()
-    const { default: lesson } = await import('@data/lessons/2026-01-en-1-2.json')
+    const { default: lesson } = await import('@data/lessons/2026-g06-01-en-1-2.json')
     const pair = lesson.words.find(([candidate]) => candidate === german)!
 
     const input = wrapper.find('input[type="text"]')
@@ -241,5 +243,11 @@ describe('app', () => {
     await router.push({ name: 'help' })
     await flushPromises()
     expect(wrapper.find('a[href="#/"]').text()).toBe('← Übersicht')
+  })
+
+  it('shows no grade switch while all lessons are of one grade', async () => {
+    // the switch itself is covered in tests/grade.test.ts; the data set here has one grade
+    const { wrapper } = await mountApp()
+    expect(wrapper.find('nav[aria-label="Klasse"]').exists()).toBe(false)
   })
 })

@@ -1,7 +1,9 @@
 # Vokabelheft
 
-Vocabulary trainer for a child (11, English). Vue 3 + Vite + TypeScript + Tailwind, deployed to GitHub Pages.
-UI language is German; code, comments, commit messages and docs are English.
+Vocabulary trainer for school children in a family (one device per child;
+different grades, English first, other languages possible). Vue 3 + Vite +
+TypeScript + Tailwind, deployed to GitHub Pages. UI language is German; code,
+comments, commit messages and docs are English.
 
 ## Content sessions: adding a lesson from a photo
 
@@ -10,8 +12,9 @@ No `src/`, no configs, no workflows, no other files — a pull request that touc
 anything else is rejected by CI.
 
 The user sends one or more photos of a vocabulary page from the school book —
-usually nothing else. Everything the file needs (id, file name, school year) is
-produced by `pnpm new-lesson`; the user does not have to know any convention.
+usually nothing else. Everything the file needs (id, file name, school year,
+grade) is produced by `pnpm new-lesson` from the title, grade and language;
+the user does not have to know any convention.
 The work has three phases. **Nothing is written to the repository before the
 user has approved the transcription in phase 2.**
 
@@ -33,6 +36,10 @@ user has approved the transcription in phase 2.**
    - **language** — the language being learned, as BCP-47 with region:
      `en-GB` for an English book (British school English), `fr-FR`, `es-ES`.
      Only ask if the page does not make it obvious.
+   - **grade** — the school grade (Klasse, 1–13) the book is for. Take it
+     from the user's message or the book (cover, "Klasse 6", "Band 2" of a
+     series that starts in grade 5 = grade 6). If neither tells, ask in
+     phase 2 — do not guess.
 5. Propose portion sizes following the rule below.
 
 ### Portion sizes (`groups`)
@@ -66,7 +73,7 @@ Present, in one message:
   they are
 - the questions from phase 1 — or "Keine offenen Fragen."
 - the proposed portions as ranges, e.g. `1–14, 15–27`
-- the title and language you will use
+- the title, language and grade you will use
 
 Then **wait**. Apply the user's corrections, show the changed rows again, and
 repeat until the user explicitly approves (e.g. "ok", "passt", "go"). Do not
@@ -84,11 +91,12 @@ Enter this phase only when both hold: the user has approved the transcription
 that — and no extra confirmation after it: once validation passes, open the
 pull request straight away.
 
-1. Create the file: `pnpm new-lesson --title "<title>" --language <tag>`
+1. Create the file: `pnpm new-lesson --title "<title>" --grade <n> --language <tag>`
    (or `node scripts/new-lesson.ts …` if pnpm is unavailable). It prints the
-   path of the new file, e.g. `data/lessons/2026-02-en-vokabelliste-1-3.json`,
-   with `id`, `title`, `language` and `schoolYear` filled in and empty `groups`
-   and `words`. Do not create the file by hand and do not edit those four fields.
+   path of the new file, e.g. `data/lessons/2026-g06-02-en-vokabelliste-1-3.json`,
+   with `id`, `title`, `language`, `schoolYear` and `grade` filled in and
+   empty `groups` and `words`. Do not create the file by hand and do not edit
+   those fields.
    Optional `--reference 1-3` sets the last part of the file name (default: a
    slug of the title).
 2. Fill in `groups` and `words` exactly as approved.
@@ -135,8 +143,8 @@ pull request straight away.
 ### Files
 
 ```
-data/lessons/<school-year>-<nn>-<language>-<reference>.json   one lesson, e.g. 2026-01-en-1-2.json
-data/lessons/lesson.schema.json                              JSON Schema (generated, do not edit)
+data/lessons/<school-year>-g<grade>-<nn>-<language>-<reference>.json   one lesson, e.g. 2026-g06-01-en-1-2.json
+data/lessons/lesson.schema.json                                       JSON Schema (generated, do not edit)
 ```
 
 Every other `*.json` in the directory is a lesson. **File names are produced by
@@ -145,15 +153,16 @@ so that you type it:
 
 - `<school-year>` — calendar year the school year starts in (`2026` = 2026/27;
   a school year starts in August)
-- `<nn>` — running number within that school year, `01`, `02`, …; the overview
-  lists lessons in this order (numerically aware)
+- `g<grade>` — the school grade, two digits: `g02`, `g06`, `g13`
+- `<nn>` — running number within that school year and grade, `01`, `02`, …;
+  the overview lists lessons in this order (numerically aware)
 - `<language>` — primary subtag of the lesson's language (`en`, `fr`)
 - `<reference>` — free text in `[a-z0-9-]`, whatever helps a human find the
   lesson (the book's list number, a slug of the title)
 
 The file name is for humans and ordering only. Renaming a file changes its
-position and nothing else; the validator checks that school year and language
-in the name match the fields inside.
+position and nothing else; the validator checks that school year, grade and
+language in the name match the fields inside.
 
 ### Lesson file
 
@@ -163,6 +172,7 @@ in the name match the fields inside.
   "title": "Vokabelliste 1.2",
   "language": "en-GB",
   "schoolYear": 2026,
+  "grade": 6,
   "groups": [15, 14, 14],
   "words": [
     ["tausend", "thousand"],
@@ -177,6 +187,7 @@ in the name match the fields inside.
 | `title` | string, required | Shown in the app, e.g. `Vokabelliste 1.2`. Display only — free to change any time. |
 | `language` | string, required | BCP-47 tag of the language being learned, with region: `en-GB`, `fr-FR`. Drives the read-aloud voice, the input's language and the display name (Englisch, Französisch). Free to change. |
 | `schoolYear` | integer, required | Calendar year the school year starts in: `2026` means 2026/27. Set automatically from the date the lesson is added. Used for grouping; free to change (keep the file name in sync). |
+| `grade` | integer 1–13, required | School grade (Klasse) the book is for. Used to segment lessons when more than one child uses the app. Free to change. |
 | `groups` | integer[] ≥ 1, required | Portion sizes in book order. Must add up to `words.length`. Free to change. |
 | `words` | `[string, string][]`, required, ≥ 1 | `["deutsch", "fremdsprache"]` in book order. Both sides non-empty. |
 
@@ -185,7 +196,7 @@ one word pair per line, UTF-8, trailing newline.
 
 Only two things have side effects on stored progress: changing `id` (whole
 lesson resets) and changing a German entry (that one word resets). Everything
-else — title, language, school year, groups, foreign side, file name — is free.
+else — title, language, school year, grade, groups, foreign side, file name — is free.
 
 Extension path, for later: a word may become an object
 `{ "de": "…", "en": "…", "note": "…" }` next to the tuples when per-word data is
@@ -227,7 +238,8 @@ Rules:
 ### Mistakes to avoid
 
 - Creating the lesson file by hand instead of with `pnpm new-lesson`, or
-  editing the generated `id`, `schoolYear` or file name.
+  editing the generated `id`, `schoolYear`, `grade`, `language` or file name
+  (rerun the script if one of them was wrong).
 - Changing an existing `id`, or reusing one for a different lesson.
 - Editing a word in an existing lesson without being asked — a changed German
   side resets that word's progress.
@@ -243,4 +255,5 @@ Rules:
 - Node 24 (`.nvmrc`), pnpm via corepack.
 - `src/domain/` is framework-free and tested; `src/app/` is Vue. Logic belongs in `domain`, not in components.
 - No abbreviations in identifiers (`lesson`, not `l`; `index`, not `idx`). Tailwind: default scale only, no arbitrary values.
-- Things that affect stored progress (change only with a migration): localStorage keys `vokabelheft-progress` and `vokabelheft-sound`, the stored format in `progress.ts`, `wordKey` in `lesson.ts`. The answer checker in `judge.ts` is pinned by `tests/judge.test.ts`.
+- Device state lives in localStorage, all via VueUse `useLocalStorage` (a `null` default needs an explicit `StorageSerializers.object`): `vokabelheft-progress` (the learning progress — format in `progress.ts`, keyed by `wordKey` in `lesson.ts`; change only with a migration), `vokabelheft-sound`, `vokabelheft-seen-lessons` ("Neu" badges), `vokabelheft-round` (the interrupted round, restored on return), `vokabelheft-grade` (the grade this device practises). The answer checker in `judge.ts` is pinned by `tests/judge.test.ts`.
+- Updates: `vite.config.ts` bakes a build id into the bundle and writes `version.json`; `useUpdateCheck` compares them on start, on foreground and every five minutes and offers a reload. Link-preview metadata needs `VITE_SITE_URL` (set by the Pages workflow; `.env` has the dev default).

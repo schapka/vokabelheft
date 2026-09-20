@@ -1,16 +1,19 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import AppMark from '@/app/components/AppMark.vue'
+import GradeNav from '@/app/components/GradeNav.vue'
 import LessonCard from '@/app/components/LessonCard.vue'
+import { useGradeFilter } from '@/app/composables/useGradeFilter.ts'
 import { useLessons } from '@/app/composables/useLessons.ts'
 import { useProgress } from '@/app/composables/useProgress.ts'
 import { useSeenLessons } from '@/app/composables/useSeenLessons.ts'
 
 const { lessons } = useLessons()
 const progress = useProgress()
-const { isNew } = useSeenLessons(lessons)
+const { isNew, seen } = useSeenLessons(lessons)
+const { grades, activeGrade, filteredLessons, chooseGrade } = useGradeFilter(lessons, seen)
 
-const shaky = computed(() => progress.shakyWords(lessons))
+const shaky = computed(() => progress.shakyWords(filteredLessons.value))
 </script>
 
 <template>
@@ -24,7 +27,9 @@ const shaky = computed(() => progress.shakyWords(lessons))
     Ein Wort sitzt, wenn du es an zwei verschiedenen Tagen richtig getippt hast.
   </p>
 
-  <div class="mt-8 grid gap-3">
+  <GradeNav v-if="grades.length > 1" class="mt-6" :grades="grades" :active="activeGrade" @select="chooseGrade" />
+
+  <div class="grid gap-3" :class="grades.length > 1 ? 'mt-3' : 'mt-8'">
     <RouterLink
       v-if="shaky.length"
       :to="{ name: 'review' }"
@@ -36,6 +41,6 @@ const shaky = computed(() => progress.shakyWords(lessons))
       </span>
     </RouterLink>
 
-    <LessonCard v-for="lesson in lessons" :key="lesson.id" :lesson="lesson" :is-new="isNew(lesson.id)" />
+    <LessonCard v-for="lesson in filteredLessons" :key="lesson.id" :lesson="lesson" :is-new="isNew(lesson.id)" />
   </div>
 </template>

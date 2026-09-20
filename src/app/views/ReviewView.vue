@@ -4,21 +4,25 @@ import EmptyStage from '@/app/components/EmptyStage.vue'
 import RoundEnd from '@/app/components/RoundEnd.vue'
 import RoundHeader from '@/app/components/RoundHeader.vue'
 import WriteStep from '@/app/components/WriteStep.vue'
+import { useGradeFilter } from '@/app/composables/useGradeFilter.ts'
 import { useLessons } from '@/app/composables/useLessons.ts'
 import { useProgress } from '@/app/composables/useProgress.ts'
 import { useRound } from '@/app/composables/useRound.ts'
 import { useRoundStorage } from '@/app/composables/useRoundStorage.ts'
+import { useSeenLessons } from '@/app/composables/useSeenLessons.ts'
 
 const router = useRouter()
 const { lessons, allWords } = useLessons()
+const { seen } = useSeenLessons(lessons)
+const { filteredLessons } = useGradeFilter(lessons, seen)
 const progress = useProgress()
 const round = useRound()
 const storage = useRoundStorage('review', round, allWords)
 
-// shaky words across all lessons, always in the write step, shuffled —
-// unless a round was interrupted, then back to that
+// shaky words across the lessons of this device's grade, always in the write
+// step, shuffled — unless a round was interrupted, then back to that
 if (!storage.restore())
-  round.start(progress.shakyWords(lessons), 'write')
+  round.start(progress.shakyWords(filteredLessons.value), 'write')
 storage.track(() => ({ group: 0, mode: 'write' }))
 </script>
 
@@ -30,7 +34,7 @@ storage.track(() => ({ group: 0, mode: 'write' }))
     Wackelkandidaten
   </h1>
   <p class="mt-1 text-foreground-muted">
-    Wörter, die noch nicht sitzen — quer durch alle Lektionen.
+    Wörter, die noch nicht sitzen — quer durch alle Lektionen deiner Klasse.
   </p>
 
   <RoundHeader :index="round.state.index" :total="round.total.value" :right="round.state.right" show-tally />

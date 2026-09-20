@@ -67,6 +67,7 @@ export const lessonFileSchema = z
     title: z.string().min(1).describe('Shown in the app, e.g. "Vokabelliste 1.3". Display only, free to change at any time.'),
     language: z.string().regex(LANGUAGE_PATTERN, 'language must be a BCP-47 tag like en-GB').describe('Language being learned, BCP-47: "en-GB", "fr-FR". Drives the read-aloud voice and the display name (Englisch, Französisch). Free to change.'),
     schoolYear: z.int().min(2000).max(2100).describe('Calendar year the school year starts in: 2026 means 2026/27. A school year starts in August. Used for grouping; free to change.'),
+    grade: z.int().min(1).max(13).describe('School grade the book is for (Klasse), 1–13. Lets the app segment lessons by grade when more than one child uses it. Free to change.'),
     groups: z.array(z.int().positive('group sizes must be positive integers'))
       .describe('Portion sizes in order, e.g. [15, 14, 14]. Must add up to the number of words.'),
     words: z.array(wordPairSchema).min(1, 'a lesson needs at least one word').describe('Word pairs in the order of the book: ["deutsch", "english"]. The German side must be unique within the lesson (compared lower-case, letters only).'),
@@ -145,6 +146,8 @@ export interface Lesson {
   language: string
   /** calendar year the school year starts in */
   schoolYear: number
+  /** school grade (Klasse) the book is for */
+  grade: number
   words: Word[]
   /** the words split into portions as configured in `groups` */
   groups: Word[][]
@@ -191,6 +194,7 @@ export function buildLesson(file: LessonFile): Lesson {
     title: file.title,
     language: file.language,
     schoolYear: file.schoolYear,
+    grade: file.grade,
     words,
     groups: groupWords(words, file.groups),
   }

@@ -17,6 +17,7 @@ import { useRound } from '@/app/composables/useRound.ts'
 import { useRoundStorage } from '@/app/composables/useRoundStorage.ts'
 import { useSeenLessons } from '@/app/composables/useSeenLessons.ts'
 import { languageName } from '@/domain/lesson.ts'
+import { formatSchoolYear } from '@/domain/schoolYear.ts'
 
 const props = defineProps<{ id: string }>()
 
@@ -92,7 +93,7 @@ function nextGroup(): void {
       {{ lesson.title }}
     </h1>
     <p class="mt-1 text-foreground-muted">
-      {{ languageName(lesson.language) }}, {{ lesson.words.length }} Wörter
+      {{ languageName(lesson.language) }}, Klasse {{ lesson.grade }}, {{ formatSchoolYear(lesson.schoolYear) }}, {{ lesson.words.length }} Wörter
     </p>
 
     <GroupChips class="mt-8" :groups="lesson.groups" :active="group" @select="setGroup" />
