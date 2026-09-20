@@ -12,6 +12,6 @@ export const router = createRouter({
     { path: '/l/:id', name: 'lesson', component: LessonView, props: true },
     { path: '/wiederholen', name: 'review', component: ReviewView },
     { path: '/hilfe', name: 'help', component: HelpView },
-    { path: '/:pathMatch(.*)*', redirect: '/' },
+    { path: '/:pathMatch(.*)*', redirect: { name: 'home' } },
   ],
 })

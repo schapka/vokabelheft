@@ -27,7 +27,7 @@ const shaky = computed(() => progress.shakyWords(lessons))
   <div class="mt-8 grid gap-3">
     <RouterLink
       v-if="shaky.length"
-      to="/wiederholen"
+      :to="{ name: 'review' }"
       class="block rounded-xl bg-foreground p-4 text-background no-underline hover:opacity-90"
     >
       <span class="block text-lg font-semibold">Wackelkandidaten</span>

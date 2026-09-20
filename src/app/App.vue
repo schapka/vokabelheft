@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import AppFooter from './components/AppFooter.vue'
 import AppMark from './components/AppMark.vue'
 import UpdateBar from './components/UpdateBar.vue'
 import { useLessons } from './composables/useLessons.ts'
+import { trackPreviousRoute } from './composables/usePreviousRoute.ts'
 
 const { error } = useLessons()
+trackPreviousRoute(useRouter())
 </script>
 
 <template>

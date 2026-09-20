@@ -14,7 +14,7 @@ const router = useRouter()
     Alles, was du geübt hast, sitzt. Such dir eine Lektion aus.
   </p>
   <div class="mt-6 flex gap-3">
-    <BaseButton @click="router.push('/')">
+    <BaseButton @click="router.push({ name: 'home' })">
       Zur Übersicht
     </BaseButton>
   </div>

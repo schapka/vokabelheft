@@ -27,7 +27,7 @@ watch(() => route.path, () => {
   <footer class="mt-12 border-t border-border pt-6">
     <nav class="flex flex-wrap gap-3" aria-label="Weitere Funktionen">
       <RouterLink
-        to="/hilfe"
+        :to="{ name: 'help' }"
         class="inline-flex h-10 items-center rounded-lg border border-border-strong bg-surface px-4 text-sm font-medium text-foreground no-underline hover:bg-border/40"
       >
         Hilfe

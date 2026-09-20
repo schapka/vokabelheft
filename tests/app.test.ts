@@ -175,4 +175,71 @@ describe('app', () => {
     expect(wrapper.text()).toContain('0 von 43 sitzen')
     expect(JSON.parse(localStorage.getItem(STORE_KEY)!)).toEqual({ words: {}, lessons: {} })
   })
+
+  it('resumes an interrupted round after visiting another page', async () => {
+    const { wrapper, router } = await mountApp('#/l/f1e88eb8')
+    await wrapper.findAll('button').find(button => button.text().includes('Schreiben'))!.trigger('click')
+    await wrapper.findAll('button').find(button => button.text() === 'Ich weiß es nicht')!.trigger('click')
+    await wrapper.findAll('button').find(button => button.text() === 'Weiter')!.trigger('click')
+    expect(wrapper.text()).toContain('Wort 2 von 15, 0 richtig')
+    const prompt = wrapper.find('[data-testid="prompt"]').text()
+
+    await router.push('/hilfe')
+    await flushPromises()
+    await router.push('/l/f1e88eb8')
+    await flushPromises()
+    expect(wrapper.text()).toContain('Wort 2 von 15, 0 richtig')
+    expect(wrapper.find('[data-testid="prompt"]').text()).toBe(prompt)
+    expect(wrapper.findAll('button[aria-pressed="true"]').some(button => button.text().includes('Schreiben'))).toBe(true)
+  })
+
+  it('resumes a stored round, including the end screen', async () => {
+    localStorage.setItem('vokabelheft-round', JSON.stringify({
+      scope: 'f1e88eb8',
+      group: 1,
+      mode: 'quiz',
+      order: ['f1e88eb8|tausend'],
+      index: 1,
+      right: 1,
+      missed: [],
+      revealed: false,
+      savedAt: Date.now(),
+    }))
+    const { wrapper } = await mountApp('#/l/f1e88eb8')
+    expect(wrapper.text()).toContain('Alles richtig.')
+    // continuing from the end screen starts the next step of that portion (group 1 has 14 words)
+    await wrapper.findAll('button').find(button => button.text() === 'Zum Schreiben')!.trigger('click')
+    expect(wrapper.text()).toContain('Wort 1 von 14')
+  })
+
+  it('ignores a stored round of another lesson or an unknown word', async () => {
+    localStorage.setItem('vokabelheft-round', JSON.stringify({
+      scope: 'f1e88eb8',
+      group: 0,
+      mode: 'write',
+      order: ['f1e88eb8|gibtesnicht'],
+      index: 0,
+      right: 0,
+      missed: [],
+      revealed: false,
+      savedAt: Date.now(),
+    }))
+    const { wrapper } = await mountApp('#/l/f1e88eb8')
+    expect(wrapper.text()).toContain('Wort 1 von 15')
+    expect(wrapper.text()).toContain('Lösung zeigen')
+  })
+
+  it('leads back to the lesson from the help page when that is where the user came from', async () => {
+    const { wrapper, router } = await mountApp('#/l/f1e88eb8')
+    await router.push({ name: 'help' })
+    await flushPromises()
+    const back = wrapper.find('a[href="#/l/f1e88eb8"]')
+    expect(back.exists()).toBe(true)
+    expect(back.text()).toBe('← Zurück zur Lektion')
+
+    await router.push({ name: 'home' })
+    await router.push({ name: 'help' })
+    await flushPromises()
+    expect(wrapper.find('a[href="#/"]').text()).toBe('← Übersicht')
+  })
 })

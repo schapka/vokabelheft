@@ -18,6 +18,15 @@ export function shuffle<Item>(items: Item[]): Item[] {
   return shuffled
 }
 
+/** the persistable part of a round: word keys instead of words */
+export interface RoundSnapshot {
+  order: string[]
+  index: number
+  right: number
+  missed: string[]
+  revealed: boolean
+}
+
 /** One pass through a list of words: position, tally and the words missed. */
 export function useRound() {
   const state = reactive({
@@ -70,7 +79,36 @@ export function useRound() {
       state.index--
   }
 
-  return { state, total, current, finished, missedUnique, start, retryMissed, answered, next, back }
+  function snapshot(): RoundSnapshot {
+    return {
+      order: state.list.map(word => word.key),
+      index: state.index,
+      right: state.right,
+      missed: state.missed.map(word => word.key),
+      revealed: state.revealed,
+    }
+  }
+
+  /**
+   * Restores a snapshot against the words it may refer to. Returns false and
+   * leaves the round untouched when a key is unknown (the lesson changed).
+   */
+  function restore(saved: RoundSnapshot, words: Word[]): boolean {
+    const byKey = new Map(words.map(word => [word.key, word]))
+    const list = saved.order.map(key => byKey.get(key))
+    const missed = saved.missed.map(key => byKey.get(key))
+    if (list.some(word => !word) || missed.some(word => !word))
+      return false
+    state.list = list as Word[]
+    state.missed = missed as Word[]
+    state.index = Math.min(saved.index, state.list.length)
+    state.right = saved.right
+    state.revealed = saved.revealed
+    state.locked = false
+    return true
+  }
+
+  return { state, total, current, finished, missedUnique, start, retryMissed, answered, next, back, snapshot, restore }
 }
 
 export type Round = ReturnType<typeof useRound>

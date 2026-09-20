@@ -14,6 +14,7 @@ import WriteStep from '@/app/components/WriteStep.vue'
 import { useLessons } from '@/app/composables/useLessons.ts'
 import { useProgress } from '@/app/composables/useProgress.ts'
 import { useRound } from '@/app/composables/useRound.ts'
+import { useRoundStorage } from '@/app/composables/useRoundStorage.ts'
 import { useSeenLessons } from '@/app/composables/useSeenLessons.ts'
 import { languageName } from '@/domain/lesson.ts'
 
@@ -28,6 +29,7 @@ const round = useRound()
 const lesson = computed(() => findLesson(props.id))
 const group = ref(0)
 const mode = ref<Mode>('read')
+const storage = useRoundStorage(props.id, round, () => lesson.value?.words ?? [])
 
 function startRound(): void {
   round.start(lesson.value?.groups[group.value] ?? [], mode.value)
@@ -45,14 +47,24 @@ function setMode(next: Mode): void {
 
 watch(lesson, (current) => {
   if (!current) {
-    router.replace('/')
+    router.replace({ name: 'home' })
     return
   }
   markSeen(current.id)
-  group.value = 0
-  mode.value = 'read'
-  startRound()
+  // back to where the child left off, if a round was interrupted
+  const resumed = storage.restore()
+  if (resumed) {
+    group.value = resumed.group
+    mode.value = resumed.mode
+  }
+  else {
+    group.value = 0
+    mode.value = 'read'
+    startRound()
+  }
 }, { immediate: true })
+
+storage.track(() => ({ group: group.value, mode: mode.value }))
 
 // finishing a round marks the step on the lesson entry
 watch(() => round.finished.value, (finished) => {
@@ -73,7 +85,7 @@ function nextGroup(): void {
 
 <template>
   <template v-if="lesson">
-    <RouterLink to="/" class="inline-block rounded-md text-sm text-foreground-muted no-underline hover:text-foreground">
+    <RouterLink :to="{ name: 'home' }" class="inline-block rounded-md text-sm text-foreground-muted no-underline hover:text-foreground">
       ← Übersicht
     </RouterLink>
     <h1 class="mt-2 text-2xl font-semibold tracking-tight">

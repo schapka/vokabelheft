@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BackLink from '@/app/components/BackLink.vue'
 import { SITS_AFTER } from '@/domain/progress.ts'
 
 const faq = [
@@ -46,9 +47,7 @@ const faq = [
 </script>
 
 <template>
-  <RouterLink to="/" class="inline-block rounded-md text-sm text-foreground-muted no-underline hover:text-foreground">
-    ← Übersicht
-  </RouterLink>
+  <BackLink />
   <h1 class="mt-2 text-2xl font-semibold tracking-tight">
     So funktioniert das Vokabelheft
   </h1>

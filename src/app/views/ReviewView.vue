@@ -7,18 +7,23 @@ import WriteStep from '@/app/components/WriteStep.vue'
 import { useLessons } from '@/app/composables/useLessons.ts'
 import { useProgress } from '@/app/composables/useProgress.ts'
 import { useRound } from '@/app/composables/useRound.ts'
+import { useRoundStorage } from '@/app/composables/useRoundStorage.ts'
 
 const router = useRouter()
-const { lessons } = useLessons()
+const { lessons, allWords } = useLessons()
 const progress = useProgress()
 const round = useRound()
+const storage = useRoundStorage('review', round, allWords)
 
-// shaky words across all lessons, always in the write step, shuffled
-round.start(progress.shakyWords(lessons), 'write')
+// shaky words across all lessons, always in the write step, shuffled —
+// unless a round was interrupted, then back to that
+if (!storage.restore())
+  round.start(progress.shakyWords(lessons), 'write')
+storage.track(() => ({ group: 0, mode: 'write' }))
 </script>
 
 <template>
-  <RouterLink to="/" class="inline-block rounded-md text-sm text-foreground-muted no-underline hover:text-foreground">
+  <RouterLink :to="{ name: 'home' }" class="inline-block rounded-md text-sm text-foreground-muted no-underline hover:text-foreground">
     ← Übersicht
   </RouterLink>
   <h1 class="mt-2 text-2xl font-semibold tracking-tight">
@@ -41,7 +46,7 @@ round.start(progress.shakyWords(lessons), 'write')
       :missed="round.missedUnique.value"
       :has-next-group="false"
       @retry-missed="round.retryMissed"
-      @home="router.push('/')"
+      @home="router.push({ name: 'home' })"
     />
     <WriteStep
       v-else
