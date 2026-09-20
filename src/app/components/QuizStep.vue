@@ -2,6 +2,7 @@
 import type { Word } from '@/domain/lesson.ts'
 import { onBeforeUnmount, ref } from 'vue'
 import { shuffle } from '@/app/composables/useRound.ts'
+import { useSpeech } from '@/app/composables/useSpeech.ts'
 import { clean } from '@/domain/judge.ts'
 import PromptWord from './PromptWord.vue'
 
@@ -22,6 +23,8 @@ const emit = defineEmits<{
 const distractors = props.pool.filter(candidate => candidate.key !== props.word.key && clean(candidate.foreign) !== clean(props.word.foreign))
 const options = shuffle(shuffle(distractors).slice(0, 3).concat([props.word]))
 
+const { speak } = useSpeech()
+
 const picked = ref<Word | null>(null)
 let timer: number | undefined
 
@@ -31,6 +34,8 @@ function pick(option: Word): void {
   picked.value = option
   const correct = option.key === props.word.key
   emit('answered', correct)
+  // hear the right word either way, like the other steps
+  speak(props.word.foreign, props.word.language)
   timer = window.setTimeout(emit, correct ? 550 : 1400, 'next')
 }
 
