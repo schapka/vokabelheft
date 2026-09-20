@@ -14,6 +14,8 @@ async function mountApp(hash = '') {
   // the progress store is a module singleton that reads localStorage on import,
   // so every test gets fresh modules
   vi.resetModules()
+  // no network in tests: the update check must find nothing
+  vi.stubGlobal('fetch', async () => ({ ok: false }))
   const [{ default: App }, { router: appRouter }] = await Promise.all([
     import('@/app/App.vue'),
     import('@/app/router.ts'),
@@ -124,5 +126,23 @@ describe('app', () => {
     const { wrapper } = await mountApp()
     expect(wrapper.text()).toContain('1 von 43 sitzt')
     expect(wrapper.text()).toContain('1 Lesen ✓')
+  })
+
+  it('marks lessons this device has not seen yet as new', async () => {
+    localStorage.setItem('vokabelheft-seen-lessons', JSON.stringify(['some-other-lesson']))
+    const { wrapper } = await mountApp()
+    expect(wrapper.text()).toContain('Neu')
+
+    await wrapper.find('a[href="#/l/f1e88eb8"]').trigger('click')
+    await flushPromises()
+    expect(JSON.parse(localStorage.getItem('vokabelheft-seen-lessons')!)).toContain('f1e88eb8')
+  })
+
+  it('treats every lesson as seen on the very first start', async () => {
+    const { wrapper } = await mountApp()
+    expect(wrapper.text()).not.toContain('Neu')
+    const seen = JSON.parse(localStorage.getItem('vokabelheft-seen-lessons')!) as string[]
+    expect(seen).toContain('f1e88eb8')
+    expect(seen.length).toBe(wrapper.findAll('a[href^="#/l/"]').length)
   })
 })

@@ -14,12 +14,14 @@ import WriteStep from '@/app/components/WriteStep.vue'
 import { useLessons } from '@/app/composables/useLessons.ts'
 import { useProgress } from '@/app/composables/useProgress.ts'
 import { useRound } from '@/app/composables/useRound.ts'
+import { useSeenLessons } from '@/app/composables/useSeenLessons.ts'
 import { languageName } from '@/domain/lesson.ts'
 
 const props = defineProps<{ id: string }>()
 
 const router = useRouter()
-const { findLesson } = useLessons()
+const { lessons, findLesson } = useLessons()
+const { markSeen } = useSeenLessons(lessons)
 const progress = useProgress()
 const round = useRound()
 
@@ -46,6 +48,7 @@ watch(lesson, (current) => {
     router.replace('/')
     return
   }
+  markSeen(current.id)
   group.value = 0
   mode.value = 'read'
   startRound()

@@ -4,9 +4,11 @@ import AppMark from '@/app/components/AppMark.vue'
 import LessonCard from '@/app/components/LessonCard.vue'
 import { useLessons } from '@/app/composables/useLessons.ts'
 import { useProgress } from '@/app/composables/useProgress.ts'
+import { useSeenLessons } from '@/app/composables/useSeenLessons.ts'
 
 const { lessons } = useLessons()
 const progress = useProgress()
+const { isNew } = useSeenLessons(lessons)
 
 const shaky = computed(() => progress.shakyWords(lessons))
 
@@ -41,7 +43,7 @@ function resetAll(): void {
       </span>
     </RouterLink>
 
-    <LessonCard v-for="lesson in lessons" :key="lesson.id" :lesson="lesson" />
+    <LessonCard v-for="lesson in lessons" :key="lesson.id" :lesson="lesson" :is-new="isNew(lesson.id)" />
   </div>
 
   <div class="mt-10 space-y-2 text-sm text-foreground-muted">

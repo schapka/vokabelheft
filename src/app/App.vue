@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppMark from './components/AppMark.vue'
+import UpdateBar from './components/UpdateBar.vue'
 import { useLessons } from './composables/useLessons.ts'
 
 const { error } = useLessons()
@@ -7,6 +8,7 @@ const { error } = useLessons()
 
 <template>
   <div class="mx-auto max-w-xl px-4 py-6 sm:py-10">
+    <UpdateBar />
     <template v-if="error">
       <div class="flex items-center gap-3">
         <AppMark />

@@ -5,7 +5,10 @@ import { useProgress } from '@/app/composables/useProgress.ts'
 import { languageName } from '@/domain/lesson.ts'
 import ProgressBar from './ProgressBar.vue'
 
-const props = defineProps<{ lesson: Lesson }>()
+const props = defineProps<{
+  lesson: Lesson
+  isNew?: boolean
+}>()
 
 const progress = useProgress()
 
@@ -27,7 +30,10 @@ const steps = computed(() => {
     class="block rounded-xl border border-border bg-surface p-4 text-inherit no-underline hover:border-border-strong"
   >
     <div class="flex items-baseline justify-between gap-4">
-      <span class="text-lg font-semibold">{{ lesson.title }}</span>
+      <span class="text-lg font-semibold">
+        {{ lesson.title }}
+        <span v-if="isNew" class="ml-2 rounded-full bg-accent px-2 py-0.5 align-middle text-xs font-medium text-accent-foreground">Neu</span>
+      </span>
       <span class="shrink-0 text-sm text-foreground-muted">{{ languageName(lesson.language) }}</span>
     </div>
     <p class="mt-1 text-sm text-foreground-muted">
