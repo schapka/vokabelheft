@@ -1,0 +1,54 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import LessonCard from '@/app/components/LessonCard.vue'
+import { useLessons } from '@/app/composables/useLessons.ts'
+import { useProgress } from '@/app/composables/useProgress.ts'
+
+const { lessons } = useLessons()
+const progress = useProgress()
+
+const shaky = computed(() => progress.shakyWords(lessons))
+
+function resetAll(): void {
+  // eslint-disable-next-line no-alert
+  if (window.confirm('Wirklich den gesamten Fortschritt auf diesem Gerät löschen?')) {
+    progress.reset()
+  }
+}
+</script>
+
+<template>
+  <h1 class="text-2xl font-semibold tracking-tight">
+    Vokabeln üben
+  </h1>
+  <p class="mt-1 text-foreground-muted">
+    Ein Wort sitzt, wenn du es an zwei verschiedenen Tagen richtig getippt hast.
+  </p>
+
+  <div class="mt-8 grid gap-3">
+    <RouterLink
+      v-if="shaky.length"
+      to="/wiederholen"
+      class="block rounded-xl bg-foreground p-4 text-background no-underline hover:opacity-90"
+    >
+      <span class="block text-lg font-semibold">Wackelkandidaten</span>
+      <span class="mt-1 block text-sm opacity-80">
+        {{ shaky.length === 1 ? 'Ein Wort, das' : `${shaky.length} Wörter, die` }} noch nicht {{ shaky.length === 1 ? 'sitzt' : 'sitzen' }}. Schreiben, gemischt.
+      </span>
+    </RouterLink>
+
+    <LessonCard v-for="lesson in lessons" :key="lesson.id" :lesson="lesson" />
+  </div>
+
+  <div class="mt-10 space-y-2 text-sm text-foreground-muted">
+    <p>
+      Der Fortschritt wird nur auf diesem Gerät gespeichert.
+      <button type="button" class="rounded-md underline hover:text-foreground" @click="resetAll">
+        Fortschritt löschen
+      </button>
+    </p>
+    <p>
+      Die Listen sind von Fotos abgetippt. Wenn etwas komisch aussieht: im Heft nachschauen.
+    </p>
+  </div>
+</template>

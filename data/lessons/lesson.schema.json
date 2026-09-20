@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}$",
+      "description": "Opaque id: 8 hex characters, generated with `pnpm new-id`. Never changed after publishing: progress is keyed by it."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Shown in the app, e.g. \"Vokabelliste 1.3\". Display only, free to change at any time."
+    },
+    "language": {
+      "type": "string",
+      "pattern": "^[a-z]{2}(?:-[A-Z]{2})?$",
+      "description": "Language being learned, BCP-47: \"en-GB\", \"fr-FR\". Drives the read-aloud voice and the display name (Englisch, Französisch). Free to change."
+    },
+    "schoolYear": {
+      "type": "integer",
+      "minimum": 2000,
+      "maximum": 2100,
+      "description": "Calendar year the school year starts in: 2026 means 2026/27. A school year starts in August. Used for grouping; free to change."
+    },
+    "groups": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "exclusiveMinimum": 0,
+        "maximum": 9007199254740991
+      },
+      "description": "Portion sizes in order, e.g. [15, 14, 14]. Must add up to the number of words."
+    },
+    "words": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "array",
+        "prefixItems": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "items": false,
+        "minItems": 2,
+        "maxItems": 2
+      },
+      "description": "Word pairs in the order of the book: [\"deutsch\", \"english\"]. The German side must be unique within the lesson (compared lower-case, letters only)."
+    }
+  },
+  "required": [
+    "id",
+    "title",
+    "language",
+    "schoolYear",
+    "groups",
+    "words"
+  ],
+  "additionalProperties": false,
+  "title": "Vokabelheft lesson",
+  "description": "One vocabulary lesson. See AGENTS.md for the rules that JSON Schema cannot express."
+}

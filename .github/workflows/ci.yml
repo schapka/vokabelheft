@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm validate
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+
+  # Lesson pull requests (branch lesson/<id>, changes only under data/lessons/)
+  # are merged automatically once the checks pass.
+  merge-lesson:
+    needs: check
+    if: github.event_name == 'pull_request' && github.base_ref == 'main' && startsWith(github.head_ref, 'lesson/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Only data/lessons may change
+        run: |
+          changed=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+          echo "$changed"
+          outside=$(echo "$changed" | grep -v '^data/lessons/' || true)
+          if [ -n "$outside" ]; then
+            echo "::error::Lesson PRs may only change data/lessons/, but this one also touches:"
+            echo "$outside"
+            exit 1
+          fi
+      - name: Merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr merge "${{ github.event.pull_request.number }}" --squash --delete-branch
+
+  # A merge made with GITHUB_TOKEN does not trigger the push workflow,
+  # so the deploy is chained here.
+  deploy-lesson:
+    needs: merge-lesson
+    uses: ./.github/workflows/pages.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
