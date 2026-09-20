@@ -20,7 +20,12 @@
 }
 
 @layer base {
-  html { -webkit-text-size-adjust: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: env(safe-area-inset-top, 0px);
+    /* no double-tap zoom on buttons and answers; pinch zoom stays available */
+    touch-action: manipulation;
+  }
   body {
     margin: 0;
     background: var(--background);
