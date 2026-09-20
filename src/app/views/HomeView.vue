@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import AppMark from '@/app/components/AppMark.vue'
 import LessonCard from '@/app/components/LessonCard.vue'
 import { useLessons } from '@/app/composables/useLessons.ts'
 import { useProgress } from '@/app/composables/useProgress.ts'
@@ -18,10 +19,13 @@ function resetAll(): void {
 </script>
 
 <template>
-  <h1 class="text-2xl font-semibold tracking-tight">
-    Vokabeln üben
-  </h1>
-  <p class="mt-1 text-foreground-muted">
+  <div class="flex items-center gap-3">
+    <AppMark />
+    <h1 class="text-2xl font-semibold tracking-tight">
+      Vokabeln üben
+    </h1>
+  </div>
+  <p class="mt-2 text-foreground-muted">
     Ein Wort sitzt, wenn du es an zwei verschiedenen Tagen richtig getippt hast.
   </p>
 
