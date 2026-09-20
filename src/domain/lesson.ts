@@ -16,6 +16,13 @@ import { z } from 'zod'
 /** opaque: 8 hex characters, generated with `pnpm new-id` */
 export const LESSON_ID_PATTERN = /^[0-9a-f]{8}$/
 
+/**
+ * Portion size guideline: enough words for a session, few enough to finish it.
+ * Not enforced by the schema; the validator warns outside this range.
+ */
+export const PORTION_MIN = 8
+export const PORTION_MAX = 16
+
 /** BCP-47 with a primary subtag and an optional region: en, en-GB, fr-FR */
 export const LANGUAGE_PATTERN = /^[a-z]{2}(?:-[A-Z]{2})?$/
 

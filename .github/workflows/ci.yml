@@ -21,11 +21,11 @@ jobs:
       - run: pnpm test
       - run: pnpm build
 
-  # Lesson pull requests (branch lesson/<id>, changes only under data/lessons/)
-  # are merged automatically once the checks pass.
+  # Pull requests that change nothing but lesson files (data/lessons/*.json)
+  # are merged automatically once the checks pass, whatever the branch is called.
   merge-lesson:
     needs: check
-    if: github.event_name == 'pull_request' && github.base_ref == 'main' && startsWith(github.head_ref, 'lesson/')
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -34,25 +34,31 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Only data/lessons may change
+      - name: Is this a lesson-only change?
+        id: scope
         run: |
           changed=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
           echo "$changed"
-          outside=$(echo "$changed" | grep -v '^data/lessons/' || true)
-          if [ -n "$outside" ]; then
-            echo "::error::Lesson PRs may only change data/lessons/, but this one also touches:"
-            echo "$outside"
-            exit 1
+          outside=$(echo "$changed" | grep -Ev '^data/lessons/[^/]+\.json$' || true)
+          if [ -z "$changed" ] || [ -n "$outside" ]; then
+            echo "Not a lesson-only PR — leaving it for a human to merge."
+            echo "lesson_only=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "lesson_only=true" >> "$GITHUB_OUTPUT"
           fi
       - name: Merge
+        if: steps.scope.outputs.lesson_only == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh pr merge "${{ github.event.pull_request.number }}" --squash --delete-branch
+    outputs:
+      lesson_only: ${{ steps.scope.outputs.lesson_only }}
 
   # A merge made with GITHUB_TOKEN does not trigger the push workflow,
   # so the deploy is chained here.
   deploy-lesson:
     needs: merge-lesson
+    if: needs.merge-lesson.outputs.lesson_only == 'true'
     uses: ./.github/workflows/pages.yml
     permissions:
       contents: read

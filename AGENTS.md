@@ -33,8 +33,29 @@ user has approved the transcription in phase 2.**
    - **language** — the language being learned, as BCP-47 with region:
      `en-GB` for an English book (British school English), `fr-FR`, `es-ES`.
      Only ask if the page does not make it obvious.
-5. Propose portion sizes: follow the book's own sections if it has any,
-   otherwise 12–15 words per portion.
+5. Propose portion sizes following the rule below.
+
+### Portion sizes (`groups`)
+
+A portion is what the child practises in one sitting. Default rule — the user
+may override it in the review, and their choice wins:
+
+1. **Count the words** `n`. Number of portions `k = ceil(n / 16)`, at least 1 —
+   as few portions as possible without exceeding 16.
+2. **Split as evenly as possible**: sizes differ by at most one, larger portions
+   first. `n = 48 → [16, 16, 16]`; `n = 43 → [15, 14, 14]`; `n = 20 → [10, 10]`;
+   `n = 14 → [14]`.
+3. **Prefer the book's own boundaries** when the page has visible sub-sections
+   (headings, rules, a gap), as long as every resulting portion has 8–16 words.
+   A sub-section longer than 16 is split evenly (rule 2); shorter than 8 is
+   joined with its neighbour.
+4. Words stay in book order — portions are consecutive ranges, never a
+   reshuffle.
+
+Present the result as ranges in phase 2. If the user asks for a different
+split (more, fewer, or uneven portions), use theirs without arguing.
+`pnpm validate` warns when a portion is outside 8–16; a warning on a split the
+user chose is fine.
 
 ### Phase 2 — Review with the user (mandatory stop)
 
@@ -54,6 +75,9 @@ branches or commits before that approval.
 
 ### Phase 3 — Publish
 
+Enter this phase only when both hold: the user has approved the transcription
+(phase 2) **and** validation passes (step 3 below). No pull request before that.
+
 1. Create the file: `pnpm new-lesson --title "<title>" --language <tag>`
    (or `node scripts/new-lesson.ts …` if pnpm is unavailable). It prints the
    path of the new file, e.g. `data/lessons/2026-02-en-vokabelliste-1-3.json`,
@@ -62,15 +86,19 @@ branches or commits before that approval.
    Optional `--reference 1-3` sets the last part of the file name (default: a
    slug of the title).
 2. Fill in `groups` and `words` exactly as approved.
-3. Run `pnpm validate` (run `pnpm install` first if `node_modules` is missing).
-   Fix what it reports. If pnpm is unavailable, say so — CI validates too.
-4. Branch `lesson/<id>` off `main` (the `id` from the file); one commit with
-   only the new file, message `Add lesson <id>: <title>`.
-5. `gh pr create --base main --title "Add lesson <id>: <title>" --body "<word count, portions>"`.
+3. Run `pnpm validate` (run `pnpm install` first if `node_modules` is missing;
+   `npm install` if pnpm is unavailable). It must print `OK`. Fix what it
+   reports and run it again. If validation cannot be run at all, stop, say why,
+   and ask the user before going on — do not open a pull request unvalidated.
+4. Commit on the session's branch (cloud sessions create one, e.g.
+   `claude/…`; any name is fine, **never `main`**): one commit with only the
+   new file, message `Add lesson <id>: <title>` with the `id` from the file.
+5. `gh pr create --base main --title "Add lesson <id>: <title>" --body "<word count, portions, transcription notes>"`.
    If `gh` is unavailable, push the branch and ask the user to open the PR from
-   the session. Never push to `main` directly.
-6. CI validates and merges the PR automatically, then deploys. If CI fails,
-   read the error, fix on the same branch, push again.
+   the session.
+6. CI validates the PR and, because it changes only lesson files, merges it
+   automatically and deploys. If CI fails, read the error, fix on the same
+   branch, push again.
 7. Report in one short message: PR link, word count, portions.
 
 ## Data contract

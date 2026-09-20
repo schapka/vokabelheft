@@ -58,12 +58,11 @@ live in `AGENTS.md`, which Claude Code reads automatically (as do most other cod
    table against the book, answer the questions (retake a photo if asked),
    adjust portions or title if you like. Nothing is written until you say "ok".
 4. **Publish.** After your ok, Claude creates the lesson file, runs
-   `pnpm validate`, and opens a pull request `Add lesson <id>: <title>` from a
-   branch `lesson/<id>`.
-5. CI validates the data; if it passes and the PR touches nothing outside
-   `data/lessons/`, it is merged and deployed automatically, usually within a
-   few minutes. If it fails, the PR stays open with the error — tell Claude to
-   fix it.
+   `pnpm validate`, and — only when that passes — opens a pull request
+   `Add lesson <id>: <title>`.
+5. CI checks the PR; if it passes and the PR changes nothing but lesson files,
+   it is merged and deployed automatically, usually within a few minutes. If it
+   fails, the PR stays open with the error — tell Claude to fix it.
 
 The rules Claude follows — what it fixes on its own, what it asks about, and the
 exact data format — are the "Data contract" section in `AGENTS.md`.
@@ -87,7 +86,7 @@ exact data format — are the "Data contract" section in `AGENTS.md`.
 
 2. Fill in `words` as `["deutsch", "fremdsprache"]` pairs in book order, and
    `groups` with the portion sizes (they must add up to the number of words;
-   12–15 per portion works well):
+   8–16 per portion, split evenly — `pnpm validate` warns otherwise):
 
    ```json
    {
@@ -165,8 +164,8 @@ every device — add a migration instead.
 A push to `main` runs `.github/workflows/pages.yml`, which builds and deploys to
 GitHub Pages. One-time repository setting: **Settings → Pages → Source: GitHub
 Actions**. `ci.yml` checks every push and pull request (validate, lint,
-typecheck, test, build); for pull requests from `lesson/*` branches that change
-only `data/lessons/`, it also merges the PR after the checks pass and triggers
-the deploy.
+typecheck, test, build); for pull requests that change nothing but
+`data/lessons/*.json`, it also merges the PR after the checks pass and triggers
+the deploy. Any other PR is left for you to merge.
 
 No analytics, no tracking, no external requests apart from Google Fonts.
