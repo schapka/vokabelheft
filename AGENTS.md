@@ -102,10 +102,33 @@ pull request straight away.
 5. `gh pr create --base main --title "Add lesson <id>: <title>" --body "<word count, portions, transcription notes>"`.
    If `gh` is unavailable, push the branch and ask the user to open the PR from
    the session.
-6. CI validates the PR and, because it changes only lesson files, merges it
-   automatically and deploys. If CI fails, read the error, fix on the same
-   branch, push again.
-7. Report in one short message: PR link, word count, portions.
+6. **Watch it through to the deployment.** CI validates the PR, merges it
+   automatically because it changes only lesson files, and dispatches the
+   Pages deployment on `main`. Follow all three steps rather than stopping at
+   the PR — the user is on a phone and should get one final message:
+
+   ```sh
+   gh pr checks <number> --watch --fail-fast          # CI on the PR (a few minutes)
+   gh pr view <number> --json state -q .state         # expect MERGED
+   gh run list --workflow pages.yml --branch main --limit 1 --json databaseId,status -q '.[0].databaseId'
+   gh run watch <run-id> --exit-status                # the deployment
+   ```
+
+   The Pages run appears a few seconds after the merge; if `gh run list`
+   shows an older, completed run, wait ten seconds and query again. Give the
+   whole chain up to fifteen minutes.
+
+   - If CI fails on the PR: read `gh run view <run-id> --log-failed`. A data
+     problem (validation) you fix on the same branch and push; anything else
+     you report with the log excerpt and stop.
+   - If the PR is not merged although CI passed: report it — the user merges
+     by hand and the Pages workflow then runs on push.
+   - If the deployment fails: report the failing step and log excerpt; do not
+     retry it yourself.
+7. Report in one short message: what was deployed (title, word count,
+   portions), the PR link, and the site URL
+   (`https://<owner>.github.io/<repo>/` — from `gh repo view --json owner,name`).
+   The lesson is visible after a reload of the app.
 
 ## Data contract
 

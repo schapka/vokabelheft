@@ -62,8 +62,11 @@ live in `AGENTS.md`, which Claude Code reads automatically (as do most other cod
    `pnpm validate`, and — only when that passes — opens a pull request
    `Add lesson <id>: <title>`.
 5. CI checks the PR; if it passes and the PR changes nothing but lesson files,
-   it is merged and deployed automatically, usually within a few minutes. If it
-   fails, the PR stays open with the error — tell Claude to fix it.
+   it is merged and deployed automatically, usually within a few minutes.
+   Claude watches the whole chain and sends one final message in the session:
+   the site URL when the deployment is through, or the failing step and the
+   error if something broke (it fixes data problems itself, anything else it
+   reports).
 
 The rules Claude follows — what it fixes on its own, what it asks about, and the
 exact data format — are the "Data contract" section in `AGENTS.md`.
