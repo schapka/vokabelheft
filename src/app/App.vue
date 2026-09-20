@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppFooter from './components/AppFooter.vue'
 import AppMark from './components/AppMark.vue'
 import UpdateBar from './components/UpdateBar.vue'
 import { useLessons } from './composables/useLessons.ts'
@@ -22,5 +23,6 @@ const { error } = useLessons()
       </div>
     </template>
     <RouterView v-else />
+    <AppFooter />
   </div>
 </template>

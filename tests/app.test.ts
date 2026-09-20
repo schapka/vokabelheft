@@ -145,4 +145,34 @@ describe('app', () => {
     expect(seen).toContain('f1e88eb8')
     expect(seen.length).toBe(wrapper.findAll('a[href^="#/l/"]').length)
   })
+
+  it('has a help page', async () => {
+    const { wrapper, router } = await mountApp()
+    expect(wrapper.find('a[href="#/hilfe"]').exists()).toBe(true)
+    await router.push('/hilfe')
+    await flushPromises()
+    expect(wrapper.text()).toContain('So funktioniert das Vokabelheft')
+    expect(wrapper.text()).toContain('2 verschiedenen Tagen')
+  })
+
+  it('deletes progress only after confirmation', async () => {
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      words: { 'f1e88eb8|tausend': { days: ['2026-09-18', '2026-09-19'], errors: 0, lastError: null } },
+      lessons: {},
+    }))
+    const { wrapper } = await mountApp()
+    expect(wrapper.text()).toContain('1 von 43 sitzt')
+
+    await wrapper.findAll('button').find(button => button.text() === 'Fortschritt löschen')!.trigger('click')
+    expect(wrapper.text()).toContain('Wirklich den gesamten Fortschritt')
+    await wrapper.findAll('button').find(button => button.text() === 'Abbrechen')!.trigger('click')
+    expect(wrapper.text()).not.toContain('Wirklich den gesamten Fortschritt')
+    expect(wrapper.text()).toContain('1 von 43 sitzt')
+
+    await wrapper.findAll('button').find(button => button.text() === 'Fortschritt löschen')!.trigger('click')
+    await wrapper.findAll('button').find(button => button.text() === 'Ja, alles löschen')!.trigger('click')
+    expect(wrapper.text()).toContain('Fortschritt gelöscht.')
+    expect(wrapper.text()).toContain('0 von 43 sitzen')
+    expect(JSON.parse(localStorage.getItem(STORE_KEY)!)).toEqual({ words: {}, lessons: {} })
+  })
 })

@@ -11,13 +11,6 @@ const progress = useProgress()
 const { isNew } = useSeenLessons(lessons)
 
 const shaky = computed(() => progress.shakyWords(lessons))
-
-function resetAll(): void {
-  // eslint-disable-next-line no-alert
-  if (window.confirm('Wirklich den gesamten Fortschritt auf diesem Gerät löschen?')) {
-    progress.reset()
-  }
-}
 </script>
 
 <template>
@@ -44,17 +37,5 @@ function resetAll(): void {
     </RouterLink>
 
     <LessonCard v-for="lesson in lessons" :key="lesson.id" :lesson="lesson" :is-new="isNew(lesson.id)" />
-  </div>
-
-  <div class="mt-10 space-y-2 text-sm text-foreground-muted">
-    <p>
-      Der Fortschritt wird nur auf diesem Gerät gespeichert.
-      <button type="button" class="rounded-md underline hover:text-foreground" @click="resetAll">
-        Fortschritt löschen
-      </button>
-    </p>
-    <p>
-      Die Listen sind von Fotos abgetippt. Wenn etwas komisch aussieht: im Heft nachschauen.
-    </p>
   </div>
 </template>
