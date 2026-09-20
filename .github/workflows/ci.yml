@@ -23,6 +23,9 @@ jobs:
 
   # Pull requests that change nothing but lesson files (data/lessons/*.json)
   # are merged automatically once the checks pass, whatever the branch is called.
+  # A merge made with GITHUB_TOKEN does not fire the push event on main, so the
+  # Pages workflow is dispatched explicitly; workflow_dispatch is exempt from
+  # that restriction and runs on main, which is the only ref allowed to deploy.
   merge-lesson:
     needs: check
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
@@ -30,6 +33,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      actions: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -51,16 +55,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh pr merge "${{ github.event.pull_request.number }}" --squash --delete-branch
-    outputs:
-      lesson_only: ${{ steps.scope.outputs.lesson_only }}
-
-  # A merge made with GITHUB_TOKEN does not trigger the push workflow,
-  # so the deploy is chained here.
-  deploy-lesson:
-    needs: merge-lesson
-    if: needs.merge-lesson.outputs.lesson_only == 'true'
-    uses: ./.github/workflows/pages.yml
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
+      - name: Deploy main
+        if: steps.scope.outputs.lesson_only == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref main

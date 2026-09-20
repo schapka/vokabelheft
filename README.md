@@ -165,7 +165,9 @@ A push to `main` runs `.github/workflows/pages.yml`, which builds and deploys to
 GitHub Pages. One-time repository setting: **Settings → Pages → Source: GitHub
 Actions**. `ci.yml` checks every push and pull request (validate, lint,
 typecheck, test, build); for pull requests that change nothing but
-`data/lessons/*.json`, it also merges the PR after the checks pass and triggers
-the deploy. Any other PR is left for you to merge.
+`data/lessons/*.json`, it also merges the PR after the checks pass and then
+dispatches the Pages workflow on `main`. Any other PR is left for you to merge.
+Deployments only ever run from `main` — keep the `github-pages` environment's
+branch rule set to `main`.
 
 No analytics, no tracking, no external requests apart from Google Fonts.
