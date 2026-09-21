@@ -1,0 +1,60 @@
+{
+  "id": "22716f15",
+  "title": "Farben",
+  "language": "en-GB",
+  "schoolYear": 2025,
+  "grade": 1,
+  "groups": [
+    12
+  ],
+  "words": [
+    [
+      "rot",
+      "red"
+    ],
+    [
+      "blau",
+      "blue"
+    ],
+    [
+      "gelb",
+      "yellow"
+    ],
+    [
+      "grün",
+      "green"
+    ],
+    [
+      "orange",
+      "orange"
+    ],
+    [
+      "lila",
+      "purple"
+    ],
+    [
+      "rosa",
+      "pink"
+    ],
+    [
+      "braun",
+      "brown"
+    ],
+    [
+      "schwarz",
+      "black"
+    ],
+    [
+      "weiß",
+      "white"
+    ],
+    [
+      "(die) Farbe",
+      "colour"
+    ],
+    [
+      "(der) Luftballon",
+      "balloon"
+    ]
+  ]
+}
