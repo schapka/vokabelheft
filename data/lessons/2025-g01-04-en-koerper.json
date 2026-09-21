@@ -1,0 +1,60 @@
+{
+  "id": "59256cb1",
+  "title": "Körper",
+  "language": "en-GB",
+  "schoolYear": 2025,
+  "grade": 1,
+  "groups": [
+    12
+  ],
+  "words": [
+    [
+      "(der) Kopf",
+      "head"
+    ],
+    [
+      "(das) Haar",
+      "hair"
+    ],
+    [
+      "(das) Auge",
+      "eye"
+    ],
+    [
+      "(das) Ohr",
+      "ear"
+    ],
+    [
+      "(die) Nase",
+      "nose"
+    ],
+    [
+      "(der) Mund",
+      "mouth"
+    ],
+    [
+      "(der) Arm",
+      "arm"
+    ],
+    [
+      "(die) Hand",
+      "hand"
+    ],
+    [
+      "(der) Finger",
+      "finger"
+    ],
+    [
+      "(der) Bauch",
+      "tummy"
+    ],
+    [
+      "(das) Bein",
+      "leg"
+    ],
+    [
+      "(der) Fuß",
+      "foot"
+    ]
+  ]
+}
