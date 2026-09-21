@@ -4,11 +4,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { SOUND_KEY } from '@/app/composables/useSpeech.ts'
 import { STORE_KEY } from '@/domain/progress.ts'
+import { FIRST_LESSON, FIRST_LESSON_WORDS, FIRST_WORD, fixtureLessons } from './fixtures/lessons.ts'
 
 /**
- * Walks through the app once with the real lesson data: overview → lesson →
- * read → write. Guards the wiring between views, composables and storage.
+ * Walks through the app once: overview → lesson → read → write. Guards the
+ * wiring between views, composables and storage.
+ *
+ * Runs on tests/fixtures/lessons.ts, not on data/lessons: the numbers below are
+ * the fixture's, so adding a lesson to the repository cannot break this file.
  */
+vi.mock('@/domain/lessons.ts', async () => {
+  const { fixtureLessons: lessons } = await import('./fixtures/lessons.ts')
+  return { loadLessons: () => ({ ok: true as const, lessons: lessons() }) }
+})
 
 async function mountApp(hash = '') {
   // the progress store is a module singleton that reads localStorage on import,
@@ -37,43 +45,44 @@ describe('app', () => {
   it('shows the lesson overview', async () => {
     const { wrapper } = await mountApp()
     expect(wrapper.text()).toContain('Vokabeln üben')
-    expect(wrapper.text()).toContain('Vokabelliste 1.2')
-    expect(wrapper.text()).toContain('0 von 43 sitzen')
+    expect(wrapper.text()).toContain('Testliste 1')
+    expect(wrapper.text()).toContain(`0 von ${FIRST_LESSON_WORDS} sitzen`)
     expect(wrapper.text()).toContain('Klasse 6, 2026/27')
     expect(wrapper.text()).not.toContain('Wackelkandidaten')
   })
 
   it('opens a lesson via its hash URL and reads through the first portion', async () => {
-    const { wrapper } = await mountApp('#/l/f1e88eb8')
-    expect(wrapper.text()).toContain('Vokabelliste 1.2')
-    expect(wrapper.text()).toContain('Englisch, Klasse 6, 2026/27, 43 Wörter')
-    expect(wrapper.text()).toContain('Wort 1 von 15')
-    expect(wrapper.text()).toContain('tausend')
+    const { wrapper } = await mountApp(`#/l/${FIRST_LESSON}`)
+    expect(wrapper.text()).toContain('Testliste 1')
+    expect(wrapper.text()).toContain(`Englisch, Klasse 6, 2026/27, ${FIRST_LESSON_WORDS} Wörter`)
+    expect(wrapper.text()).toContain('Wort 1 von 5')
+    expect(wrapper.text()).toContain('eins')
 
     await wrapper.find('button[aria-pressed]').exists()
+    expect(wrapper.text()).not.toContain('one')
     const reveal = wrapper.findAll('button').find(button => button.text() === 'Lösung zeigen')!
     await reveal.trigger('click')
-    expect(wrapper.text()).toContain('thousand')
+    expect(wrapper.text()).toContain('one')
 
     const next = wrapper.findAll('button').find(button => button.text() === 'Weiter')!
     await next.trigger('click')
-    expect(wrapper.text()).toContain('Wort 2 von 15')
+    expect(wrapper.text()).toContain('Wort 2 von 5')
   })
 
   it('records a correct typed answer and a mistake in localStorage', async () => {
-    const { wrapper } = await mountApp('#/l/f1e88eb8')
+    const { wrapper } = await mountApp(`#/l/${FIRST_LESSON}`)
     const writeMode = wrapper.findAll('button').find(button => button.text().includes('Schreiben'))!
     await writeMode.trigger('click')
 
     // the prompt is the German side; look up the expected English answer
     const german = wrapper.find('[data-testid="prompt"]').text()
-    const { default: lesson } = await import('@data/lessons/2026-g06-01-en-1-2.json')
-    const pair = lesson.words.find(([candidate]) => candidate === german)!
+    const [lesson] = fixtureLessons()
+    const expected = lesson!.words.find(word => word.german === german)!.foreign
 
     const input = wrapper.find('input[type="text"]')
     expect(input.attributes('autocorrect')).toBe('off')
     expect(input.attributes('spellcheck')).toBe('false')
-    await input.setValue(pair[1])
+    await input.setValue(expected)
     await input.trigger('keydown.enter')
     expect(wrapper.text()).toContain('Richtig.')
     expect(wrapper.text()).toContain('Morgen nochmal, dann sitzt es.')
@@ -90,7 +99,7 @@ describe('app', () => {
 
   it('offers the shaky-word review once a mistake was made', async () => {
     localStorage.setItem(STORE_KEY, JSON.stringify({
-      words: { 'f1e88eb8|tausend': { days: [], errors: 1, lastError: '2026-09-19' } },
+      words: { [FIRST_WORD]: { days: [], errors: 1, lastError: '2026-09-19' } },
       lessons: {},
     }))
     const { wrapper, router } = await mountApp()
@@ -100,7 +109,7 @@ describe('app', () => {
     await flushPromises()
     expect(wrapper.text()).toContain('Wackelkandidaten')
     expect(wrapper.text()).toContain('Wort 1 von 1')
-    expect(wrapper.text()).toContain('tausend')
+    expect(wrapper.text()).toContain('eins')
   })
 
   it('persists the read-aloud switch', async () => {
@@ -109,7 +118,7 @@ describe('app', () => {
       speechSynthesis: { getVoices: () => [], cancel: () => {}, speak: () => {} },
       SpeechSynthesisUtterance: class {},
     })
-    const { wrapper } = await mountApp('#/l/f1e88eb8')
+    const { wrapper } = await mountApp(`#/l/${FIRST_LESSON}`)
     const toggle = wrapper.find('[role="switch"]')
     expect(toggle.attributes('aria-checked')).toBe('true')
     expect(toggle.text()).toContain('Vorlesen an')
@@ -122,11 +131,11 @@ describe('app', () => {
 
   it('reads the stored progress format', async () => {
     localStorage.setItem(STORE_KEY, JSON.stringify({
-      words: { 'f1e88eb8|tausend': { days: ['2026-09-18', '2026-09-19'], errors: 0, lastError: null } },
-      lessons: { f1e88eb8: { read: '2026-09-19' } },
+      words: { [FIRST_WORD]: { days: ['2026-09-18', '2026-09-19'], errors: 0, lastError: null } },
+      lessons: { [FIRST_LESSON]: { read: '2026-09-19' } },
     }))
     const { wrapper } = await mountApp()
-    expect(wrapper.text()).toContain('1 von 43 sitzt')
+    expect(wrapper.text()).toContain(`1 von ${FIRST_LESSON_WORDS} sitzt`)
     expect(wrapper.text()).toContain('1 Lesen ✓')
   })
 
@@ -135,16 +144,16 @@ describe('app', () => {
     const { wrapper } = await mountApp()
     expect(wrapper.text()).toContain('Neu')
 
-    await wrapper.find('a[href="#/l/f1e88eb8"]').trigger('click')
+    await wrapper.find(`a[href="#/l/${FIRST_LESSON}"]`).trigger('click')
     await flushPromises()
-    expect(JSON.parse(localStorage.getItem('vokabelheft-seen-lessons')!)).toContain('f1e88eb8')
+    expect(JSON.parse(localStorage.getItem('vokabelheft-seen-lessons')!)).toContain(FIRST_LESSON)
   })
 
   it('treats every lesson as seen on the very first start', async () => {
     const { wrapper } = await mountApp()
     expect(wrapper.text()).not.toContain('Neu')
     const seen = JSON.parse(localStorage.getItem('vokabelheft-seen-lessons')!) as string[]
-    expect(seen).toContain('f1e88eb8')
+    expect(seen).toContain(FIRST_LESSON)
     expect(seen.length).toBe(wrapper.findAll('a[href^="#/l/"]').length)
   })
 
@@ -159,83 +168,83 @@ describe('app', () => {
 
   it('deletes progress only after confirmation', async () => {
     localStorage.setItem(STORE_KEY, JSON.stringify({
-      words: { 'f1e88eb8|tausend': { days: ['2026-09-18', '2026-09-19'], errors: 0, lastError: null } },
+      words: { [FIRST_WORD]: { days: ['2026-09-18', '2026-09-19'], errors: 0, lastError: null } },
       lessons: {},
     }))
     const { wrapper } = await mountApp()
-    expect(wrapper.text()).toContain('1 von 43 sitzt')
+    expect(wrapper.text()).toContain(`1 von ${FIRST_LESSON_WORDS} sitzt`)
 
     await wrapper.findAll('button').find(button => button.text() === 'Fortschritt löschen')!.trigger('click')
     expect(wrapper.text()).toContain('Wirklich den gesamten Fortschritt')
     await wrapper.findAll('button').find(button => button.text() === 'Abbrechen')!.trigger('click')
     expect(wrapper.text()).not.toContain('Wirklich den gesamten Fortschritt')
-    expect(wrapper.text()).toContain('1 von 43 sitzt')
+    expect(wrapper.text()).toContain(`1 von ${FIRST_LESSON_WORDS} sitzt`)
 
     await wrapper.findAll('button').find(button => button.text() === 'Fortschritt löschen')!.trigger('click')
     await wrapper.findAll('button').find(button => button.text() === 'Ja, alles löschen')!.trigger('click')
     expect(wrapper.text()).toContain('Fortschritt gelöscht.')
-    expect(wrapper.text()).toContain('0 von 43 sitzen')
+    expect(wrapper.text()).toContain(`0 von ${FIRST_LESSON_WORDS} sitzen`)
     expect(JSON.parse(localStorage.getItem(STORE_KEY)!)).toEqual({ words: {}, lessons: {} })
   })
 
   it('resumes an interrupted round after visiting another page', async () => {
-    const { wrapper, router } = await mountApp('#/l/f1e88eb8')
+    const { wrapper, router } = await mountApp(`#/l/${FIRST_LESSON}`)
     await wrapper.findAll('button').find(button => button.text().includes('Schreiben'))!.trigger('click')
     await wrapper.findAll('button').find(button => button.text() === 'Ich weiß es nicht')!.trigger('click')
     await wrapper.findAll('button').find(button => button.text() === 'Weiter')!.trigger('click')
-    expect(wrapper.text()).toContain('Wort 2 von 15, 0 richtig')
+    expect(wrapper.text()).toContain('Wort 2 von 5, 0 richtig')
     const prompt = wrapper.find('[data-testid="prompt"]').text()
 
     await router.push('/hilfe')
     await flushPromises()
-    await router.push('/l/f1e88eb8')
+    await router.push(`/l/${FIRST_LESSON}`)
     await flushPromises()
-    expect(wrapper.text()).toContain('Wort 2 von 15, 0 richtig')
+    expect(wrapper.text()).toContain('Wort 2 von 5, 0 richtig')
     expect(wrapper.find('[data-testid="prompt"]').text()).toBe(prompt)
     expect(wrapper.findAll('button[aria-pressed="true"]').some(button => button.text().includes('Schreiben'))).toBe(true)
   })
 
   it('resumes a stored round, including the end screen', async () => {
     localStorage.setItem('vokabelheft-round', JSON.stringify({
-      scope: 'f1e88eb8',
+      scope: FIRST_LESSON,
       group: 1,
       mode: 'quiz',
-      order: ['f1e88eb8|tausend'],
+      order: [FIRST_WORD],
       index: 1,
       right: 1,
       missed: [],
       revealed: false,
       savedAt: Date.now(),
     }))
-    const { wrapper } = await mountApp('#/l/f1e88eb8')
+    const { wrapper } = await mountApp(`#/l/${FIRST_LESSON}`)
     expect(wrapper.text()).toContain('Alles richtig.')
-    // continuing from the end screen starts the next step of that portion (group 1 has 14 words)
+    // continuing from the end screen starts the next step of that portion (group 1 has 3 words)
     await wrapper.findAll('button').find(button => button.text() === 'Zum Schreiben')!.trigger('click')
-    expect(wrapper.text()).toContain('Wort 1 von 14')
+    expect(wrapper.text()).toContain('Wort 1 von 3')
   })
 
   it('ignores a stored round of another lesson or an unknown word', async () => {
     localStorage.setItem('vokabelheft-round', JSON.stringify({
-      scope: 'f1e88eb8',
+      scope: FIRST_LESSON,
       group: 0,
       mode: 'write',
-      order: ['f1e88eb8|gibtesnicht'],
+      order: [`${FIRST_LESSON}|gibtesnicht`],
       index: 0,
       right: 0,
       missed: [],
       revealed: false,
       savedAt: Date.now(),
     }))
-    const { wrapper } = await mountApp('#/l/f1e88eb8')
-    expect(wrapper.text()).toContain('Wort 1 von 15')
+    const { wrapper } = await mountApp(`#/l/${FIRST_LESSON}`)
+    expect(wrapper.text()).toContain('Wort 1 von 5')
     expect(wrapper.text()).toContain('Lösung zeigen')
   })
 
   it('leads back to the lesson from the help page when that is where the user came from', async () => {
-    const { wrapper, router } = await mountApp('#/l/f1e88eb8')
+    const { wrapper, router } = await mountApp(`#/l/${FIRST_LESSON}`)
     await router.push({ name: 'help' })
     await flushPromises()
-    const back = wrapper.find('a[href="#/l/f1e88eb8"]')
+    const back = wrapper.find(`a[href="#/l/${FIRST_LESSON}"]`)
     expect(back.exists()).toBe(true)
     expect(back.text()).toBe('← Zurück zur Lektion')
 
