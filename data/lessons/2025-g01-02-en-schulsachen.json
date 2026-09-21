@@ -1,0 +1,60 @@
+{
+  "id": "963620a0",
+  "title": "Schulsachen",
+  "language": "en-GB",
+  "schoolYear": 2025,
+  "grade": 1,
+  "groups": [
+    12
+  ],
+  "words": [
+    [
+      "(der) Bleistift",
+      "pencil"
+    ],
+    [
+      "(der) Buntstift",
+      "crayon"
+    ],
+    [
+      "(der) Stift",
+      "pen"
+    ],
+    [
+      "(das) Buch",
+      "book"
+    ],
+    [
+      "(der) Radiergummi",
+      "rubber"
+    ],
+    [
+      "(das) Lineal",
+      "ruler"
+    ],
+    [
+      "(die) Schere",
+      "scissors"
+    ],
+    [
+      "(der) Klebestift",
+      "glue stick"
+    ],
+    [
+      "(die) Federtasche",
+      "pencil case"
+    ],
+    [
+      "(der) Schulranzen",
+      "schoolbag"
+    ],
+    [
+      "(die) Tafel",
+      "board"
+    ],
+    [
+      "(die) Schule",
+      "school"
+    ]
+  ]
+}
