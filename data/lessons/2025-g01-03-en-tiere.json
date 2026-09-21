@@ -1,0 +1,56 @@
+{
+  "id": "ef4fb465",
+  "title": "Tiere",
+  "language": "en-GB",
+  "schoolYear": 2025,
+  "grade": 1,
+  "groups": [
+    11
+  ],
+  "words": [
+    [
+      "(der) Hund",
+      "dog"
+    ],
+    [
+      "(die) Katze",
+      "cat"
+    ],
+    [
+      "(die) Maus",
+      "mouse"
+    ],
+    [
+      "(der) Maulwurf",
+      "mole"
+    ],
+    [
+      "(das) Kaninchen",
+      "rabbit"
+    ],
+    [
+      "(der) Frosch",
+      "frog"
+    ],
+    [
+      "(die) Biene",
+      "bee"
+    ],
+    [
+      "(der) Schmetterling",
+      "butterfly"
+    ],
+    [
+      "(der) Wurm",
+      "worm"
+    ],
+    [
+      "(der) Baum",
+      "tree"
+    ],
+    [
+      "(das) Tier",
+      "animal"
+    ]
+  ]
+}
