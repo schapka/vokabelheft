@@ -97,6 +97,43 @@ describe('app', () => {
     expect(entries.some(entry => entry.days.length === 0 && entry.errors === 1)).toBe(true)
   })
 
+  it('keeps a wrong quiz pick on screen until "Weiter", and moves on by itself after a right one', async () => {
+    vi.useFakeTimers()
+    try {
+      const { wrapper } = await mountApp(`#/l/${FIRST_LESSON}`)
+      await wrapper.findAll('button').find(button => button.text().includes('Ankreuzen'))!.trigger('click')
+      expect(wrapper.text()).toContain('Wort 1 von 5')
+
+      const [lesson] = fixtureLessons()
+      const expectedFor = (): string => lesson!.words.find(word => word.german === wrapper.find('[data-testid="prompt"]').text())!.foreign
+      const optionButtons = () => wrapper.findAll('button').filter(button => lesson!.words.some(word => word.foreign === button.text()))
+      expect(optionButtons()).toHaveLength(4)
+
+      // a wrong pick: both the mistake and the right answer are marked, with a verdict in words
+      const expected = expectedFor()
+      await optionButtons().find(button => button.text() !== expected)!.trigger('click')
+      expect(wrapper.text()).toContain(`Falsch. Richtig wäre: ${expected}`)
+      expect(wrapper.find('button[data-verdict="wrong"]').classes()).toContain('border-danger')
+      expect(wrapper.find('button[data-verdict="right"]').text()).toContain(expected)
+      expect(wrapper.find('button[data-verdict="right"]').classes()).toContain('border-success')
+      // …and nothing moves on without the child
+      await vi.advanceTimersByTimeAsync(5000)
+      expect(wrapper.text()).toContain('Wort 1 von 5')
+      await wrapper.findAll('button').find(button => button.text() === 'Weiter')!.trigger('click')
+      expect(wrapper.text()).toContain('Wort 2 von 5')
+
+      // a right pick: a short confirmation, then the next word without a button
+      await optionButtons().find(button => button.text() === expectedFor())!.trigger('click')
+      expect(wrapper.text()).toContain('Richtig.')
+      expect(wrapper.findAll('button').some(button => button.text() === 'Weiter')).toBe(false)
+      await vi.advanceTimersByTimeAsync(1000)
+      expect(wrapper.text()).toContain('Wort 3 von 5')
+    }
+    finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('offers the shaky-word review once a mistake was made', async () => {
     localStorage.setItem(STORE_KEY, JSON.stringify({
       words: { [FIRST_WORD]: { days: [], errors: 1, lastError: '2026-09-19' } },
